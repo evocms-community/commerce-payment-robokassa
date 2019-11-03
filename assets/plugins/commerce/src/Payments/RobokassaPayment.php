@@ -4,12 +4,10 @@ namespace Commerce\Payments;
 
 class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
 {
-    public function init()
+    public function __construct($modx, array $params = [])
     {
-        return [
-            'code' => 'robokassa',
-            'title' => 'Robokassa',
-        ];
+        parent::__construct($modx, $params);
+        $this->lang = $modx->commerce->getUserLanguage('robokassa');
     }
 
     public function getMarkup()
@@ -17,17 +15,17 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
         $out = [];
 
         if (empty($this->getSetting('merchant_login'))) {
-            $out[] = $this->lang['payments.error_empty_shop_id'];
+            $out[] = $this->lang['robokassa.error.empty_shop_id'];
         }
 
         $prefix = !empty($this->getSetting('debug')) ? 'test' : '';
 
         if (empty($this->getSetting($prefix . 'pass1'))) {
-            $out[] = $this->lang['payments.error_empty_password1'];
+            $out[] = $this->lang['robokassa.error.empty_password1'];
         }
 
         if (empty($this->getSetting($prefix . 'pass2'))) {
-            $out[] = $this->lang['payments.error_empty_password2'];
+            $out[] = $this->lang['robokassa.error.empty_password2'];
         }
 
         $out = implode('<br>', $out);
@@ -44,27 +42,26 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
         $debug = !empty($this->getSetting('debug'));
 
         $processor = $this->modx->commerce->loadProcessor();
-        $order = $processor->getOrder();
-        $fields = $order['fields'];
-        $currency = ci()->currency->getCurrency($order['currency']);
-        $payment = $this->createPayment($order['id'], ci()->currency->convertToDefault($order['amount'], $currency['code']));
+        $order     = $processor->getOrder();
+        $currency  = ci()->currency->getCurrency($order['currency']);
+        $payment   = $this->createPayment($order['id'], ci()->currency->convertToDefault($order['amount'], $currency['code']));
 
         $data = [
-            'MerchantLogin' => $this->getSetting('merchant_login'),
-            'OutSum' => $order['amount'],
-            'InvId' => $order['id'],
+            'MerchantLogin'   => $this->getSetting('merchant_login'),
+            'OutSum'          => $order['amount'],
+            'InvId'           => $order['id'],
             'Shp_PaymentHash' => $payment['hash'],
-            'Shp_PaymentId' => $payment['id'],
-            'Encoding' => 'utf-8',
-            'InvDesc' => ci()->tpl->parseChunk($this->lang['payments.payment_description'], [
-                'order_id' => $order['id'],
+            'Shp_PaymentId'   => $payment['id'],
+            'Encoding'        => 'utf-8',
+            'InvDesc'         => ci()->tpl->parseChunk($this->lang['payments.payment_description'], [
+                'order_id'  => $order['id'],
                 'site_name' => $this->modx->getConfig('site_name'),
             ]),
         ];
 
         $cart = $processor->getCart();
         $vat_code = $this->getSetting('vat_code');
-        $items = [];
+        $items = $subtotals = [];
 
         foreach ($cart->getItems() as $item) {
             $items[] = [
@@ -75,10 +72,9 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
             ];
         }
 
-        $rows = [];
-        $cart->getSubtotals($rows, $amountTotal);
+        $cart->getSubtotals($subtotals, $total);
 
-        foreach ($rows as $row) {
+        foreach ($subtotals as $row) {
             $items[] = [
                 'name' => mb_substr($row['title'], 0, 64),
                 'quantity' => 1,
@@ -151,12 +147,10 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
             return false;
         }
 
-        $processor = $this->modx->commerce->loadProcessor();
-
         try {
-            $processor->processPayment($data['Shp_PaymentId'], floatval($data['OutSum']));
+            $this->modx->commerce->loadProcessor()->processPayment($data['Shp_PaymentId'], floatval($data['OutSum']));
         } catch (\Exception $e) {
-            $this->modx->logEvent(0, 3, 'JSON processing failed: ' . $e->getMessage(), 'Commerce Robokassa Payment');
+            $this->modx->logEvent(0, 3, 'Payment processing failed: ' . $e->getMessage(), 'Commerce Robokassa Payment');
             return false;
         }
 
