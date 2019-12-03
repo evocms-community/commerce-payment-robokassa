@@ -48,7 +48,7 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
 
         $data = [
             'MerchantLogin'   => $this->getSetting('merchant_login'),
-            'OutSum'          => $order['amount'],
+            'OutSum'          => $payment['amount'],
             'InvId'           => $order['id'],
             'Shp_PaymentHash' => $payment['hash'],
             'Shp_PaymentId'   => $payment['id'],
@@ -59,32 +59,28 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
             ]),
         ];
 
-        $cart = $processor->getCart();
+        $items = $this->prepareItems($processor->getCart());
         $vat_code = $this->getSetting('vat_code');
-        $items = $subtotals = [];
 
-        foreach ($cart->getItems() as $item) {
-            $items[] = [
-                'name' => mb_substr($item['name'], 0, 64),
-                'quantity' => $item['count'],
-                'sum' => $item['price'] * $item['count'],
-                'tax' => $vat_code,
-            ];
+        $isPartialPayment = $payment['amount'] < $order['amount'];
+
+        if ($isPartialPayment) {
+            $items = $this->decreaseItemsAmount($items, $order['amount'], $payment['amount']);
         }
 
-        $cart->getSubtotals($subtotals, $total);
+        $products = [];
 
-        foreach ($subtotals as $row) {
-            $items[] = [
-                'name' => mb_substr($row['title'], 0, 64),
-                'quantity' => 1,
-                'sum' => $row['price'],
-                'tax' => $vat_code,
+        foreach ($items as $i => $item) {
+            $products[] = [
+                'name'     => mb_substr($item['name'], 0, 64),
+                'quantity' => $item['count'],
+                'sum'      => $item['total'],
+                'tax'      => $vat_code,
             ];
         }
 
         $data['receipt'] = urlencode(json_encode([
-            'items' => $items,
+            'items' => $products,
         ], JSON_UNESCAPED_UNICODE));
 
         if (!empty($order['email']) && filter_var($order['email'], FILTER_VALIDATE_EMAIL)) {

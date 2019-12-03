@@ -5,7 +5,7 @@
  * Robokassa payments processing
  *
  * @category    plugin
- * @version     0.1.2
+ * @version     0.1.3
  * @author      mnoskov
  * @internal    @events OnRegisterPayments,OnBeforeOrderSending,OnManagerBeforeOrderRender
  * @internal    @properties &title=Название;text; &merchant_login=Идентификатор магазина;text; &pass1=Пароль 1;text; &pass2=Пароль 2;text; &debug=Отладка;list;Нет==0||Да==1;0 &testpass1=Отладочный пароль 1;text; &testpass2=Отладочный пароль 2;text; &vat_code=Ставка НДС;list;НДС не облагается==none||НДС 0%==vat0||НДС по формуле 10/110==vat110||НДС по формуле 20/120==vat120||НДС 10%==vat10||НДС 20%==vat20;none
