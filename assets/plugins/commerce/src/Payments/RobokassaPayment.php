@@ -44,7 +44,7 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
         $processor = $this->modx->commerce->loadProcessor();
         $order     = $processor->getOrder();
         $currency  = ci()->currency->getCurrency($order['currency']);
-        $payment   = $this->createPayment($order['id'], ci()->currency->convertToDefault($order['amount'], $currency['code']));
+        $payment   = $this->createPayment($order['id'], ci()->currency->convert($order['amount'], $currency['code'], 'RUB'));
 
         $data = [
             'MerchantLogin'   => $this->getSetting('merchant_login'),
