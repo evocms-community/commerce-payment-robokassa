@@ -74,7 +74,7 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
             $products[] = [
                 'name'     => mb_substr($item['name'], 0, 64),
                 'quantity' => $item['count'],
-                'sum'      => $item['total'],
+                'sum'      => ci()->currency->convert($item['total'], $currency['code'], 'RUB'),
                 'tax'      => $vat_code,
             ];
         }
