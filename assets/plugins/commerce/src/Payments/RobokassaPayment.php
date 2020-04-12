@@ -107,7 +107,7 @@ class RobokassaPayment extends Payment implements \Commerce\Interfaces\Payment
         ]);
 
         return $view->render('payment_form.tpl', [
-            'url' => 'https://merchant.roboxchange.com/Index.aspx',
+            'url' => 'https://auth.robokassa.ru/Merchant/Index.aspx',
             'data' => $data,
         ]);
     }
